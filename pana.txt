@@ -1,0 +1,659 @@
+
+CRUD operation
+
+composer create-project laravel/laravel crud
+
+php artisan make:migration create_contacts_table
+
+Goto database/migration/create_contacts_table.php
+	<?php
+
+	use Illuminate\Database\Migrations\Migration;
+	use Illuminate\Database\Schema\Blueprint;
+	use Illuminate\Support\Facades\Schema;
+
+	class CreateContactsTable extends Migration
+	{
+    
+    public function up()
+    {
+        Schema::create('contacts', function (Blueprint $table) {
+            $table->id();
+            $table->timestamps();
+            $table->string('name');
+            $table->string('address');
+            $table->string('mobile');
+        });
+    }
+
+   
+   	 public function down()
+   	 {
+       		 Schema::dropIfExists('contacts');
+    	}
+	}
+
+
+
+php artisan migrate
+
+php artisan make:controller ContactController --resource
+
+php artisan make:model Contact
+app\Models\Contact
+	<?php
+
+	namespace App\Models;
+
+	namespace App\Models;
+	use Illuminate\Database\Eloquent\Factories\HasFactory;
+	use Illuminate\Database\Eloquent\Model;
+
+	class Contact extends Model
+	{
+   	 protected $table = 'contacts';
+    	protected $primaryKey='id';
+    	protected $fillable=['name','address','mobile'];
+
+	}
+	
+
+
+create folder contacts
+	
+	layout.blade.php
+
+<!DOCTYPE html>
+<html>
+<head>
+<title>Contact Laravel 8 CRUD</title>
+<link
+href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"
+rel="stylesheet" integrity="sha384-
+1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3"
+crossorigin="anonymous">
+</head>
+<body>
+<div class="container">
+@yield('content')
+</div>
+</body>
+</html>
+
+
+	 index.blade.php
+
+@extends('contacts.layout')
+@section('content')
+<div class="container">
+<div class="row">
+<div class="col-md-9">
+<div class="card">
+<div class="card-header">Contacts</div>
+<div class="card-body">
+<a href="{{ url('/contact/create') }}" class="btn btn-success btn-sm" title="Add New Contact">
+<i class="fa fa-plus" aria-hidden="true"></i> Add New
+</a>
+<br/>
+<br/>
+<div class="table-responsive">
+<table class="table">
+<thead>
+<tr>
+<th>#</th>
+<th>Name</th>
+<th>Address</th>
+<th>Telephone</th>
+<th>Actions</th>
+</tr>
+</thead>
+<tbody>
+@foreach($contacts as $item)
+<tr>
+<td>{{ $loop->iteration }}</td>
+<td>{{ $item->name }}</td>
+<td>{{ $item->address }}</td>
+<td>{{ $item->mobile }}</td>
+<td>
+<a href="{{ url('/contact/' . $item->id) }}" title="View Student"><button class="btn btn-info btnsm"><i class="fa fa-eye" aria-hidden="true"></i> View</button></a>
+<a href="{{ url('/contact/' . $item->id . '/edit') }}" title="Edit Student"><button class="btn btnprimary btn-sm"><i class="fa fa-pencil-square-o" aria-hidden="true"></i> Edit</button></a>
+<form method="POST" action="{{ url('/contact' . '/' . $item->id) }}" accept-charset="UTF-8" style="display:inline">
+{{ method_field('DELETE') }}
+{{ csrf_field() }}
+<button type="submit" class="btn btn-danger btn-sm" title="Delete Contact" onclick="return confirm(&quot;Confirm delete?&quot;)"><i class="fa fa-trash-o" aria-hidden="true"></i> Delete</button>
+</form>
+</td>
+</tr>
+@endforeach
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+@endsection
+
+
+	Create.blade.php
+
+@extends('contacts.layout')
+@section('content')
+<div class="card">
+<div class="card-header">Contactus Page</div>
+<div class="card-body">
+<form action="{{ url('contact') }}" method="post">
+{!! csrf_field() !!}
+<label>Name</label></br>
+<input type="text" name="name" id="name" class="form-control"></br>
+<label>Address</label></br>
+<input type="text" name="address" id="address" class="formcontrol"></br>
+<label>Mobile</label></br>
+<input type="text" name="mobile" id="mobile" class="formcontrol"></br>
+<input type="submit" value="Save" class="btn btn-success"></br>
+</form>
+</div>
+</div>
+@stop
+
+
+	edit.blade.php
+
+@extends('contacts.layout')
+@section('content')
+<div class="card">
+<div class="card-header">Contactus Page</div>
+<div class="card-body">
+<form action="{{ url('contact/' .$contacts->id) }}" method="post">
+{!! csrf_field() !!}
+@method("PATCH")
+<input type="hidden" name="id" id="id" value="{{$contacts->id}}" id="id"/>
+<label>Name</label></br>
+<input type="text" name="name" id="name" value="{{$contacts->name}}" class="form-control"></br>
+<label>Address</label></br>
+<input type="text" name="address" id="address" value="{{$contacts->address}}" class="form-control"></br>
+<label>Mobile</label></br>
+<input type="text" name="mobile" id="mobile" value="{{$contacts->mobile}}" class="form-control"></br>
+<input type="submit" value="Update" class="btn btn-success"></br>
+</form>
+</div>
+</div>
+@stop
+	
+
+	show.blade.php
+
+@extends('contacts.layout')
+@section('content')
+<div class="card">
+<div class="card-header">Contactus Page</div>
+<div class="card-body">
+<div class="card-body">
+<h5 class="card-title">Name : {{ $contacts->name }}</h5>
+<p class="card-text">Address : {{ $contacts->address }}</p>
+<p class="card-text">Phone : {{ $contacts->mobile }}</p>
+</div>
+</hr>
+</div>
+</div>
+
+
+
+
+	Controller 
+
+<?php
+
+namespace App\Http\Controllers;
+use App\Models\Contact;
+use Illuminate\Http\Request;
+
+class ContactController extends Controller
+{
+    
+    public function index()
+    {
+        $contacts = Contact::all();
+        return view ('contacts.index')->with('contacts', $contacts);
+    }
+
+    public function create()
+    {
+        return view('contacts.create');
+    }
+
+
+    public function store(Request $request)
+    {   
+        $input = $request->all();
+        Contact::create($input);
+        return redirect('contact')->with('flash_message', 'Contact Addedd!');
+    }
+
+
+    public function show($id)
+    {
+        $contact = Contact::find($id);
+        return view('contacts.show')->with('contacts', $contact);
+    }
+
+
+    public function edit($id)
+    {
+        $contact = Contact::find($id);
+        return view('contacts.edit')->with('contacts', $contact);
+    }
+
+
+    public function update(Request $request, $id)
+    {
+        $contact = Contact::find($id);
+        $input = $request->all();
+        $contact->update($input);
+        return redirect('contact')->with('flash_message', 'Contact Updated!');
+    }
+
+    public function destroy($id)
+    {
+        Contact::destroy($id);
+        return redirect('contact')->with('flash_message', 'Contact deleted!');  
+    }
+}
+
+
+
+
+
+	Routes
+
+<?php
+
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ContactController;
+
+
+Route::get('/', function () {
+    return view('welcome');
+});
+
+Route::resource('/contact', ContactController::class);
+
+
+
+
+php artisan serve
+localhost:8000/contact
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Image
+
+
+php artisan make:migration create_employees_table
+	$table->string(‘name’);
+	$table->string(‘address’);
+	$table->string(‘mobile’);
+	$table->string(‘photo’,300);
+
+
+
+php artisan migrate
+
+php artisan make:controller EmployeeController --resource
+
+ php artisan make:model Employee
+	<?php
+
+	namespace App\Models;
+
+	use Illuminate\Database\Eloquent\Factories\HasFactory;
+	use Illuminate\Database\Eloquent\Model;
+
+	class Employee extends Model
+	{
+    	use HasFactory;
+    	protected $table = 'employees';
+    	protected $primaryKey = 'id';
+    	protected $fillable=['name','address','mobile','photo'];
+	}
+
+
+resources->views->employees
+	layout.blade.php
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initialscale=1.0">
+<title>Image Upload</title>
+<title>Laravel 9 Image Upload and Display in Datatable | File Storage</title>
+<link
+href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3"
+crossorigin="anonymous">
+</head>
+<body>
+<div class="container">
+@yield('content')
+</div>
+</body>
+</html>
+
+
+	index.blade.php
+@extends('employees.layout')
+@section('content')
+ <div class="container">
+ <div class="row">
+ <div class="col-12" style="padding:20px;">
+<div class="card">
+ <div class="card-header">Laravel 9 Image Upload and Display in Datatable | File Storage</div> <div class="card-body">
+ <a href="{{ url('/employee/create') }}" class="btn btn-success btn-sm" title="Add New Contact">
+ <i class="fa fa-plus" ariahidden="true"></i> Add New
+ </a>
+ <br/>
+ <br/>
+ <div class="table-responsive">
+ <table class="table">
+ <thead>
+ <tr>
+ <th>#</th>
+ <th>Name</th>
+ <th>Address</th>
+ <th>Telephone</th>
+ <th>Photo</th>
+ </thead>
+ </thead>
+ <tbody>
+ @foreach($employees as $item)
+ <tr>
+ <td>{{ $loop->iteration
+}}</td>
+ <td>{{ $item->name }}</td>
+ <td>{{ $item->address
+}}</td>
+<td>{{ $item->mobile
+}}</td>
+ <td>
+ <img src="{{asset($item->photo) }}" width= '50' height='50' class="img imgresponsive" />
+ </td>
+ </tr>
+ @endforeach
+ </tbody>
+ </table>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+@endsection
+
+
+	Create.blade.php
+@extends('employees.layout')
+@section('content')
+<div class="card" style="margin: 20px;">
+<div class="card-header">Create New Employee</div>
+<div class="card-body">
+<form action="{{ url('employee') }}" method="post"
+enctype="multipart/form-data">
+{!! csrf_field() !!}
+<label>Name</label></br>
+<input type="text" name="name" id="name" class="formcontrol"></br>
+<label>Address</label></br>
+<input type="text" name="address" id="address" class="formcontrol"></br>
+<label>Mobile</label></br>
+<input type="text" name="mobile" id="mobile" class="formcontrol"></br>
+<input class="form-control" name="photo" type="file" id="photo">
+<input type="submit" value="Save" class="btn btn-success"></br>
+</form>
+</div>
+</div>
+@stop
+
+
+Controller
+	<?php
+	namespace App\Http\Controllers;
+	use Illuminate\Http\Request;
+	use App\Models\Employee;
+
+	class EmployeeController extends Controller
+	{
+	public function index()
+	{
+	$employees = Employee::all();
+	return view ('employees.index')->with('employees', $employees);
+	}
+
+	public function create()
+	{
+	return view('employees.create');
+	}
+
+	public function store(Request $request)
+	{
+	$requestData = $request->all();
+	$fileName = time().$request->file('photo')->getClientOriginalName();
+	$path = $request->file('photo')->storeAs('images', $fileName,'public');
+	$requestData["photo"] = '/storage/'.$path;
+	Employee::create($requestData);
+	return redirect('employee')->with('flash_message', 'Employee Addedd!');
+	}
+
+	public function show($id)
+		{
+	}
+
+	public function edit($id)
+	{
+	}
+
+	public function update(Request $request, $id)
+	{
+	}
+
+	public function destroy($id)
+	{
+
+	}
+	}
+
+
+Routes
+
+	<?php
+
+	use Illuminate\Support\Facades\Route;
+	use App\Http\Controllers\EmployeeController;
+
+	Route::get('/', function () {
+	    return view('welcome');
+	});
+
+	Route::resource("/employee", EmployeeController::class);
+
+
+
+
+
+
+
+
+
+
+
+
+
+	form2.php
+
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <style>
+            .error {color: #FF0000;}
+        </style>
+    </head>
+<body>
+
+
+<?php
+// define variables and set to empty values
+        $nameErr = $emailErr = $genderErr = $commentErr = $websiteErr = "";
+        $name = $email = $gender = $comment = $website = "";
+
+    //name Field Validation part start
+        if ($_SERVER["REQUEST_METHOD"] == "POST") {
+            
+            if (empty($_POST["name"])) {
+                $nameErr = "Name is required";
+                }
+                
+                else
+                 {
+                    $name = test_input($_POST["name"]);
+                // check if name only contains letters andwhitespace
+                if (!preg_match("/^[a-zA-Z]*$/",$name)) {
+                    $nameErr = "Only letters and white space
+                    allowed";
+                }
+            }
+        
+
+        //name Field Validation part end
+
+        //email field VAlidation part start
+             
+        if (empty($_POST["email"])) {
+            $emailErr = "Email is required";
+        } else 
+            {
+                $email = test_input($_POST["email"]);
+                // check if e-mail address is well-formed
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                        $emailErr = "Invalid email format";
+             }
+
+        }
+
+         //email field VAlidation part end
+
+        //Url Validation Part Start
+        if (empty($_POST["website"])) {
+                $website = "";
+            } 
+            else {
+                $website = test_input($_POST["website"]);
+                // check if URL address syntax is valid
+                if(!preg_match("/\b(?:(?:https?|ftp):\/\/|www\.)[-a-z0-9+&@#\/%?=~_|!:,.;]*[-a-z0-9+&@#\/%=~_|]/i",$website)) {
+                        $websiteErr = "Invalid URL";
+                }
+        }
+        //Url Validation Part End
+
+
+
+        if (empty($_POST["comment"])) {
+                $comment = "";
+        } else {
+            $comment = test_input($_POST["comment"]);
+        }
+
+        
+
+        if (empty($_POST["gender"])) {
+            $genderErr = "Gender is required";
+        } else {
+            $gender = test_input($_POST["gender"]);
+        }
+        }
+
+
+
+        function test_input($data) {
+             $data = trim($data);
+             $data = stripslashes($data);
+            $data = htmlspecialchars($data);
+            return $data;
+        }
+?>
+
+
+
+<!--*****************************Form Start******************************************************-->
+
+
+<h2>PHP Form Validation Example</h2>
+<p><span class="error">* required field</span></p>
+
+
+<form method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>">
+        Name: <input type="text" name="name">
+            <span class="error">* <?php echo $nameErr;?></span>
+            <br><br>
+
+        E-mail: <input type="text" name="email">
+            <span class="error">* <?php echo $emailErr;?></span>
+        <br><br>
+
+        Website: <input type="text" name="website">
+        <span class="error"><?php echo $websiteErr;?></span>
+        <br><br>
+
+        Comment: <textarea name="comment" rows="5"cols="40"></textarea>
+        <br><br>
+
+        Gender:
+            <input type="radio" name="gender" value="female">Female
+            <input type="radio" name="gender" value="male">Male
+            <input type="radio" name="gender" value="other">Other
+            <span class="error">* <?php echo $genderErr;?></span>
+    <br><br>
+
+    <input type="submit" name="submit" value="Submit">
+</form>
+
+<!-- ************************************Form End**************************************************** -->
+
+
+
+
+<?php
+    echo "<h2>Your Input:</h2>";
+    echo $name;
+    echo "<br>";
+    echo $email;
+    echo "<br>";
+    echo $website;
+    echo "<br>";
+    echo $comment;
+    echo "<br>";
+    echo $gender;
+?>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
